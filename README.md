@@ -258,6 +258,15 @@ Quick security test:
 python test_security.py
 ```
 
+**Comprehensive Testing:** For detailed testing instructions, see [TESTING.md](TESTING.md) which includes:
+- Pre-test setup
+- Testing all user roles
+- Security feature verification
+- SQL query testing
+- UI component testing
+- Real-world scenarios
+- Troubleshooting tests
+
 ### Query Examples by Role
 
 **Admin/Manager Queries:**
@@ -350,6 +359,7 @@ crm-rag-db/
 ├── .env.example            # Environment variables template
 ├── SECURITY.md              # ✨ NEW: Complete security documentation
 ├── SECURE_APP_GUIDE.md     # ✨ NEW: User guide for secure app
+├── TESTING.md              # ✨ NEW: Comprehensive testing guide
 └── README.md               # This file
 ```
 
@@ -559,6 +569,11 @@ docker exec crm_postgres psql -U crm_user -d postgres -c "\l" | grep crm_db_rag
 - Ensure you have the latest `app_secure.py`
 - Restart the Streamlit app
 
+**11. Search button doesn't respond on first click**
+- Fixed in latest version - now uses form-based approach for better state management
+- If you experience issues, click the Search button directly (Cmd+Enter not supported in forms)
+- The button should work on the first click now
+
 ### Database Connection Issues
 ```bash
 # Test PostgreSQL connection
@@ -602,6 +617,7 @@ python --version
 ✅ **Improved AI responses** - Better tool selection based on user role
 ✅ **Added simple usernames** - `admin`, `manager`, `sales`, `viewer` now work
 ✅ **Fixed double-sanitization** - my_leads tool no longer applies filters twice
+✅ **Fixed UI button responsiveness** - Search button now works on first click (form-based approach)
 
 ### Enhanced Features
 ✅ **Smart tool selection** - AI chooses execute_sql for specific queries, my_leads for general listings
@@ -644,6 +660,16 @@ python --version
   - Demo accounts
   - Testing scenarios
   - Security comparison examples
+
+- **[TESTING.md](TESTING.md)** - Comprehensive testing guide
+  - Pre-test setup instructions
+  - Testing all user roles (admin, manager, sales, viewer)
+  - Security feature testing (row-level, column-level, audit logs)
+  - SQL query testing (basic, advanced, edge cases)
+  - UI component testing
+  - Real-world test scenarios
+  - Troubleshooting tests
+  - Quick test checklist for smoke testing
 
 - **[test_security.py](test_security.py)** - Security demonstration script
   - Run it to see security in action
