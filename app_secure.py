@@ -6,6 +6,7 @@ from agno.models.openai import OpenAIChat
 from db_connection import CRMDatabase
 from auth import AuthService
 from crm_agent import CRMDatabaseTools
+from prompt_injection import PromptInjectionDetector, PromptInjectionException, create_safe_system_message
 
 # Load environment variables
 load_dotenv()
@@ -240,7 +241,7 @@ def show_main_app():
 
         # Update system message based on user role
         if _user.can_view_all_leads():
-            system_msg = f"""You are a helpful CRM assistant helping {_user.full_name} (role: {_user.role}) query and analyze leads data.
+            base_system_msg = f"""You are a helpful CRM assistant helping {_user.full_name} (role: {_user.role}) query and analyze leads data.
 
 The user has access to ALL leads in the database.
 
@@ -270,7 +271,7 @@ Examples:
 - "Leads by status" → execute_sql with "SELECT status, COUNT(*) FROM leads GROUP BY status"
 """
         else:
-            system_msg = f"""You are a helpful CRM assistant helping {_user.full_name} (role: {_user.role}) query and analyze leads data.
+            base_system_msg = f"""You are a helpful CRM assistant helping {_user.full_name} (role: {_user.role}) query and analyze leads data.
 
 IMPORTANT SECURITY NOTICE:
 The user can ONLY see leads assigned to them or that they own.
@@ -296,10 +297,13 @@ Examples:
 - "leads from website" → Use execute_sql with "SELECT * FROM leads WHERE source = 'website'"
 """
 
+        # Apply prompt injection protection to system message
+        safe_system_msg = create_safe_system_message(base_system_msg)
+
         agent = Agent(
             model=OpenAIChat(id="gpt-4o", api_key=openai_api_key),
             tools=[crm_tools],
-            system_message=system_msg,
+            system_message=safe_system_msg,
             markdown=True,
         )
 
@@ -334,6 +338,9 @@ Examples:
 
     st.markdown("---")
 
+    # Initialize prompt injection detector
+    detector = PromptInjectionDetector(strict_mode=True)
+
     # Query interface - using form for better button behavior
     with st.form("query_form", clear_on_submit=False):
         user_query = st.text_area(
@@ -347,6 +354,21 @@ Examples:
 
     if submit_button and user_query and user_query.strip():
         try:
+            # Check for prompt injection FIRST
+            with st.spinner("🔒 Validating query security..."):
+                is_valid, error_msg, warnings = validate_user_query(user_query, detector)
+
+                # Display any warnings
+                for warning in warnings:
+                    st.warning(warning)
+
+                # Block invalid queries
+                if not is_valid:
+                    st.error(f"🚫 {error_msg}")
+                    st.info("💡 If you believe this is an error, try rephrasing your query using natural language.")
+                    st.stop()
+
+            # Process the safe query
             with st.spinner("🔄 Analyzing your query and fetching data..."):
                 response = agent.run(user_query)
 
@@ -358,6 +380,9 @@ Examples:
             else:
                 st.markdown(str(response))
 
+        except PromptInjectionException as e:
+            st.error(f"🚫 Security Alert: {str(e)}")
+            st.info("💡 Please use natural language queries for legitimate CRM purposes only.")
         except Exception as e:
             st.error(f"❌ Error processing query: {e}")
     elif submit_button:

@@ -23,6 +23,7 @@ A powerful CRM assistant that uses AI to query your PostgreSQL leads database us
 - **Audit Logging**: Track who accessed what data and when
 - **Session Management**: Secure user sessions with logout
 - **Smart Tool Selection**: AI chooses right tool based on user role and query type
+- **Prompt Injection Protection** 🛡️ NEW: Detects and blocks malicious prompt manipulation attempts
 
 ## 🏗️ Architecture
 
@@ -360,6 +361,8 @@ crm-rag-db/
 ├── SECURITY.md              # ✨ NEW: Complete security documentation
 ├── SECURE_APP_GUIDE.md     # ✨ NEW: User guide for secure app
 ├── TESTING.md              # ✨ NEW: Comprehensive testing guide
+├── PROMPT_INJECTION.md     # 🛡️ NEW: Prompt injection protection guide
+├── prompt_injection.py     # 🛡️ NEW: Prompt injection detection module
 └── README.md               # This file
 ```
 
@@ -619,6 +622,14 @@ python --version
 ✅ **Fixed double-sanitization** - my_leads tool no longer applies filters twice
 ✅ **Fixed UI button responsiveness** - Search button now works on first click (form-based approach)
 
+### New Security Features
+🛡️ **Prompt injection protection** - Multi-layer defense against LLM prompt manipulation attacks
+- Pattern-based input validation blocks suspicious queries
+- Hardened system messages resist manipulation
+- SQL-level sanitization provides backup protection
+- Tool enforcement limits AI actions
+- Comprehensive testing suite with 14 test cases (all passing)
+
 ### Enhanced Features
 ✅ **Smart tool selection** - AI chooses execute_sql for specific queries, my_leads for general listings
 ✅ **Better system messages** - Different instructions for admin vs non-admin users
@@ -670,6 +681,15 @@ python --version
   - Real-world test scenarios
   - Troubleshooting tests
   - Quick test checklist for smoke testing
+
+- **[PROMPT_INJECTION.md](PROMPT_INJECTION.md)** - Prompt injection protection guide
+  - What is prompt injection and why it matters
+  - Attack examples and defense strategies
+  - Multi-layer protection approach
+  - Testing prompt injection defenses
+  - Configuration and customization
+  - Real-world attack scenarios
+  - Best practices and monitoring
 
 - **[test_security.py](test_security.py)** - Security demonstration script
   - Run it to see security in action
