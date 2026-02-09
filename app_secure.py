@@ -6,7 +6,7 @@ from agno.models.openai import OpenAIChat
 from db_connection import CRMDatabase
 from auth import AuthService
 from crm_agent import CRMDatabaseTools
-from prompt_injection import PromptInjectionDetector, PromptInjectionException, create_safe_system_message
+from prompt_injection import PromptInjectionDetector, PromptInjectionException, create_safe_system_message, validate_user_query
 
 # Load environment variables
 load_dotenv()
