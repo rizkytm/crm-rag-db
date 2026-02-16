@@ -184,7 +184,7 @@ def main():
         submit_button = st.button("🔍 Search", use_container_width=True, type="primary")
 
     if submit_button:
-        if not user_query.strip():
+        if user_query = None:
             st.warning("⚠️ Please enter a query.")
         else:
             try:
