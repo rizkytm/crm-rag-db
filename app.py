@@ -42,6 +42,8 @@ st.markdown("""
 st.markdown('<div class="main-header">👥 CRM Leads Assistant</div>', unsafe_allow_html=True)
 st.markdown("---")
 
+# this is additional comment
+
 # Sidebar for configuration
 with st.sidebar:
     st.header("⚙️ Configuration")
