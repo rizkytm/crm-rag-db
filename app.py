@@ -37,6 +37,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# this is a comment
+
 st.markdown('<div class="main-header">👥 CRM Leads Assistant</div>', unsafe_allow_html=True)
 st.markdown("---")
 
