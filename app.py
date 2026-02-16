@@ -78,6 +78,7 @@ with st.sidebar:
     """)
 
 # Initialize database connection
+#this is another comment
 @st.cache_resource
 def init_database():
     """Initialize database connection"""
