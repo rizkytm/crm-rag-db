@@ -76,15 +76,19 @@ jobs:
 
             This PR will be updated automatically when changes are merged to $SOURCE."
 
-            PR_NUMBER=$(gh pr create \
+            gh pr create \
               --base $TARGET \
               --head $SOURCE \
               --title "$PR_TITLE" \
               --body "$PR_BODY" \
               --assignee "$ASSIGNEE" \
-              --label "to-staging" \
+              --label "to-staging"
+
+            PR_NUMBER=$(gh pr list \
+              --base $TARGET \
+              --head $SOURCE \
               --json number \
-              --jq '.number')
+              --jq '.[0].number')
 
             echo "Created PR: $SOURCE to $TARGET (#$PR_NUMBER)"
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
@@ -135,15 +139,19 @@ jobs:
 
             This PR will be updated automatically when changes are merged to $SOURCE."
 
-            PR_NUMBER=$(gh pr create \
+            gh pr create \
               --base $TARGET \
               --head $SOURCE \
               --title "$PR_TITLE" \
               --body "$PR_BODY" \
               --assignee "$ASSIGNEE" \
-              --label "to-main" \
+              --label "to-main"
+
+            PR_NUMBER=$(gh pr list \
+              --base $TARGET \
+              --head $SOURCE \
               --json number \
-              --jq '.number')
+              --jq '.[0].number')
 
             echo "Created PR: $SOURCE to $TARGET (#$PR_NUMBER)"
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
