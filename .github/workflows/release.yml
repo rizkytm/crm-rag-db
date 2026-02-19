@@ -74,6 +74,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Trigger Deployment Reminder
+        run: |
+          echo "### Next Steps :point_right:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To deploy this release, run the **Deploy** workflow manually:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to **Actions** → **Deploy**" >> $GITHUB_STEP_SUMMARY
+          echo "2. Click **Run workflow**" >> $GITHUB_STEP_SUMMARY
+          echo "3. Select the target environment" >> $GITHUB_STEP_SUMMARY
+
       - name: Release Summary
         run: |
           echo "### Release Created Successfully :rocket:" >> $GITHUB_STEP_SUMMARY
