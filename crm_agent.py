@@ -29,6 +29,7 @@ class CRMDatabaseTools(Toolkit):
         self.register(self.team_leads)
 
     def execute_sql(self, query: str) -> str:
+        # This method allows executing SQL queries with security controls in place.
         """
         Execute a SQL query on the CRM database and return results.
 
