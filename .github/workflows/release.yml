@@ -11,6 +11,15 @@ on:
         description: 'Release description'
         required: true
         type: string
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+        default: 'dev'
 
 jobs:
   validate-and-release:
@@ -74,14 +83,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Trigger Deployment Reminder
+      - name: Trigger Deployment
+        id: trigger_deployment
         run: |
-          echo "### Next Steps :point_right:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "To deploy this release, run the **Deploy** workflow manually:" >> $GITHUB_STEP_SUMMARY
-          echo "1. Go to **Actions** → **Deploy**" >> $GITHUB_STEP_SUMMARY
-          echo "2. Click **Run workflow**" >> $GITHUB_STEP_SUMMARY
-          echo "3. Select the target environment" >> $GITHUB_STEP_SUMMARY
+          ENVIRONMENT="${{ inputs.environment }}"
+
+          echo "Triggering deployment to $ENVIRONMENT environment..."
+
+          # Trigger the deployment workflow
+          gh workflow run deploy.yml \
+            -f environment="$ENVIRONMENT"
+
+          echo "✓ Deployment workflow triggered successfully"
+
+          # Get the workflow run URL
+          sleep 5
+          WORKFLOW_RUN_URL=$(gh run list --workflow=deploy.yml --limit 1 --json url --jq '.[0].url')
+
+          echo "deployment_workflow_url=$WORKFLOW_RUN_URL" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release Summary
         run: |
@@ -89,7 +110,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **URL:** ${{ steps.create_release.outputs.release_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Created by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment:** [View Deployment Workflow](${{ steps.trigger_deployment.outputs.deployment_workflow_url }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Description" >> $GITHUB_STEP_SUMMARY
           echo "${{ inputs.description }}" >> $GITHUB_STEP_SUMMARY
