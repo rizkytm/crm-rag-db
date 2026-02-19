@@ -5,6 +5,8 @@ from typing import List, Dict, Any
 import pandas as pd
 from agno.tools import Toolkit
 
+# CRM-specific tools for querying PostgreSQL database with security controls
+
 
 class CRMDatabaseTools(Toolkit):
     """Tools for querying CRM PostgreSQL database with security controls"""
