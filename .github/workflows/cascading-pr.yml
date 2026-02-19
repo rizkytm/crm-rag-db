@@ -34,7 +34,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
-      - name: Create PR: dev → staging
+      - name: Create PR dev to staging
         id: pr_staging
         run: |
           SOURCE="dev"
@@ -58,7 +58,7 @@ jobs:
             --jq '.[0].number' // empty)
 
           if [ -n "$EXISTING_PR" ]; then
-            echo "PR $SOURCE → $TARGET already exists (#$EXISTING_PR)"
+            echo "PR $SOURCE to $TARGET already exists (#$EXISTING_PR)"
 
             # Update assignee and labels for existing PR
             gh pr edit $EXISTING_PR --add-assignee "$ASSIGNEE" --add-label "to-staging"
@@ -71,8 +71,8 @@ jobs:
             PR_BODY="This is an automatically created cascading PR.
 
             - Original PR: #$ORIGINAL_PR
-            - Original branch: \`$ORIGINAL_BRANCH\`
-            - Merging \`$SOURCE\` into \`$TARGET\`
+            - Original branch: $ORIGINAL_BRANCH
+            - Merging $SOURCE into $TARGET
 
             This PR will be updated automatically when changes are merged to $SOURCE."
 
@@ -86,14 +86,14 @@ jobs:
               --json number \
               --jq '.number')
 
-            echo "✓ Created PR: $SOURCE → $TARGET (#$PR_NUMBER)"
+            echo "Created PR: $SOURCE to $TARGET (#$PR_NUMBER)"
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create PR: staging → main
+      - name: Create PR staging to main
         id: pr_main
         run: |
           SOURCE="staging"
@@ -117,7 +117,7 @@ jobs:
             --jq '.[0].number' // empty)
 
           if [ -n "$EXISTING_PR" ]; then
-            echo "PR $SOURCE → $TARGET already exists (#$EXISTING_PR)"
+            echo "PR $SOURCE to $TARGET already exists (#$EXISTING_PR)"
 
             # Update assignee and labels for existing PR
             gh pr edit $EXISTING_PR --add-assignee "$ASSIGNEE" --add-label "to-main"
@@ -130,8 +130,8 @@ jobs:
             PR_BODY="This is an automatically created cascading PR.
 
             - Original PR: #$ORIGINAL_PR
-            - Original branch: \`$ORIGINAL_BRANCH\`
-            - Merging \`$SOURCE\` into \`$TARGET\`
+            - Original branch: $ORIGINAL_BRANCH
+            - Merging $SOURCE into $TARGET
 
             This PR will be updated automatically when changes are merged to $SOURCE."
 
@@ -145,7 +145,7 @@ jobs:
               --json number \
               --jq '.number')
 
-            echo "✓ Created PR: $SOURCE → $TARGET (#$PR_NUMBER)"
+            echo "Created PR: $SOURCE to $TARGET (#$PR_NUMBER)"
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
@@ -157,16 +157,21 @@ jobs:
           ORIGINAL_PR="${{ steps.pr_info.outputs.pr_number }}"
           ASSIGNEE="${{ steps.pr_info.outputs.pr_author }}"
 
-          COMMENT_BODY="### 🔄 Cascading PRs Created
+          COMMENT_BODY="### Cascading PRs Created
 
           This PR has automatically created cascading pull requests:
 
           | PR | Assignee | Labels | Status |
           |---|---|---|---|
-          | [dev → staging](#${{ steps.pr_staging.outputs.pr_number }}) | @$ASSIGNEE | \`to-staging\` | ${{ steps.pr_staging.outputs.exists == 'true' && 'Already existed' || '✓ Created' }} |
-          | [staging → main](#${{ steps.pr_main.outputs.pr_number }}) | @$ASSIGNEE | \`to-main\` | ${{ steps.pr_main.outputs.exists == 'true' && 'Already existed' || '✓ Created' }} |
+          | dev to staging #$STAGING_PR | @$ASSIGNEE | to-staging | $STAGING_STATUS |
+          | staging to main #$MAIN_PR | @$ASSIGNEE | to-main | $MAIN_STATUS |
 
           These PRs will be updated as changes flow through the pipeline."
+
+          STAGING_PR="${{ steps.pr_staging.outputs.pr_number }}"
+          MAIN_PR="${{ steps.pr_main.outputs.pr_number }}"
+          STAGING_STATUS="${{ steps.pr_staging.outputs.exists == 'true' && 'Already existed' || 'Created' }}"
+          MAIN_STATUS="${{ steps.pr_main.outputs.exists == 'true' && 'Already existed' || 'Created' }}"
 
           gh pr comment $ORIGINAL_PR --body "$COMMENT_BODY"
         env:
@@ -176,18 +181,18 @@ jobs:
         run: |
           ASSIGNEE="${{ steps.pr_info.outputs.pr_author }}"
 
-          echo "### Cascading PRs Summary :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "### Cascading PRs Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Original PR:** #${{ steps.pr_info.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
           echo "**Source Branch:** ${{ steps.pr_info.outputs.source_branch }}" >> $GITHUB_STEP_SUMMARY
           echo "**Author:** @$ASSIGNEE" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Created PRs:**" >> $GITHUB_STEP_SUMMARY
-          echo "- dev → staging: #${{ steps.pr_staging.outputs.pr_number }} ${{ steps.pr_staging.outputs.exists == 'true' && '(already existed)' || '(newly created)' }}" >> $GITHUB_STEP_SUMMARY
-          echo "  - Label: \`to-staging\`" >> $GITHUB_STEP_SUMMARY
+          echo "- dev to staging: #${{ steps.pr_staging.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "  - Label: to-staging" >> $GITHUB_STEP_SUMMARY
           echo "  - Assignee: @$ASSIGNEE" >> $GITHUB_STEP_SUMMARY
-          echo "- staging → main: #${{ steps.pr_main.outputs.pr_number }} ${{ steps.pr_main.outputs.exists == 'true' && '(already existed)' || '(newly created)' }}" >> $GITHUB_STEP_SUMMARY
-          echo "  - Label: \`to-main\`" >> $GITHUB_STEP_SUMMARY
+          echo "- staging to main: #${{ steps.pr_main.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "  - Label: to-main" >> $GITHUB_STEP_SUMMARY
           echo "  - Assignee: @$ASSIGNEE" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Original PR Label:** \`to-dev\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Original PR Label:** to-dev" >> $GITHUB_STEP_SUMMARY
