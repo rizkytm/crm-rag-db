@@ -26,6 +26,7 @@ jobs:
           echo "target_branch=${{ github.base_ref }}" >> $GITHUB_OUTPUT
           echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+          echo "pr_title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
 
       - name: Create labels if they don't exist
         run: |
@@ -48,6 +49,7 @@ jobs:
           SOURCE="${{ steps.pr_info.outputs.source_branch }}"
           TARGET="staging"
           ORIGINAL_PR="${{ steps.pr_info.outputs.pr_number }}"
+          ORIGINAL_PR_TITLE="${{ steps.pr_info.outputs.pr_title }}"
           ORIGINAL_BRANCH="${{ steps.pr_info.outputs.source_branch }}"
           ASSIGNEE="${{ steps.pr_info.outputs.pr_author }}"
 
@@ -68,19 +70,19 @@ jobs:
           if [ -n "$EXISTING_PR" ]; then
             echo "PR $SOURCE to $TARGET already exists (#$EXISTING_PR)"
 
-            # Update assignee and labels for existing PR
-            gh pr edit $EXISTING_PR --add-assignee "$ASSIGNEE" --add-label "to-staging"
+            # Update title, assignee and labels for existing PR
+            gh pr edit $EXISTING_PR --title "$ORIGINAL_PR_TITLE" --add-assignee "$ASSIGNEE" --add-label "to-staging"
 
             echo "pr_number=$EXISTING_PR" >> $GITHUB_OUTPUT
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             # Create the PR
-            PR_TITLE="Merge $ORIGINAL_BRANCH into $TARGET"
+            PR_TITLE="$ORIGINAL_PR_TITLE"
             PR_BODY="This is an automatically created cascading PR.
 
             - Original PR: #$ORIGINAL_PR
             - Original branch: $ORIGINAL_BRANCH
-            - Merging $ORIGINAL_BRANCH into $TARGET
+            - Target environment: $TARGET
 
             This PR tracks the same changes as the original PR but targets the $TARGET environment."
 
@@ -111,6 +113,7 @@ jobs:
           SOURCE="${{ steps.pr_info.outputs.source_branch }}"
           TARGET="main"
           ORIGINAL_PR="${{ steps.pr_info.outputs.pr_number }}"
+          ORIGINAL_PR_TITLE="${{ steps.pr_info.outputs.pr_title }}"
           ORIGINAL_BRANCH="${{ steps.pr_info.outputs.source_branch }}"
           ASSIGNEE="${{ steps.pr_info.outputs.pr_author }}"
 
@@ -131,19 +134,19 @@ jobs:
           if [ -n "$EXISTING_PR" ]; then
             echo "PR $SOURCE to $TARGET already exists (#$EXISTING_PR)"
 
-            # Update assignee and labels for existing PR
-            gh pr edit $EXISTING_PR --add-assignee "$ASSIGNEE" --add-label "to-main"
+            # Update title, assignee and labels for existing PR
+            gh pr edit $EXISTING_PR --title "$ORIGINAL_PR_TITLE" --add-assignee "$ASSIGNEE" --add-label "to-main"
 
             echo "pr_number=$EXISTING_PR" >> $GITHUB_OUTPUT
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             # Create the PR
-            PR_TITLE="Merge $ORIGINAL_BRANCH into $TARGET"
+            PR_TITLE="$ORIGINAL_PR_TITLE"
             PR_BODY="This is an automatically created cascading PR.
 
             - Original PR: #$ORIGINAL_PR
             - Original branch: $ORIGINAL_BRANCH
-            - Merging $ORIGINAL_BRANCH into $TARGET
+            - Target environment: $TARGET
 
             This PR tracks the same changes as the original PR but targets the $TARGET environment."
 
