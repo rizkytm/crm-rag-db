@@ -85,6 +85,7 @@ def init_database():
         return None
 
 # Initialize agent
+# Note: We use caching to avoid re-initializing the agent on every interaction, which can be expensive.
 @st.cache_resource
 def init_agent(_db_connection, openai_api_key):
     """Initialize CRM agent"""
