@@ -38,9 +38,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
-      - name: Add label to original PR
+      - name: Add label and assignee to original PR
         run: |
-          gh pr edit ${{ steps.pr_info.outputs.pr_number }} --add-label "to-dev"
+          gh pr edit ${{ steps.pr_info.outputs.pr_number }} \
+            --add-label "to-dev" \
+            --add-assignee "${{ steps.pr_info.outputs.pr_author }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
