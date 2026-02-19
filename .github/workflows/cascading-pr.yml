@@ -36,12 +36,14 @@ jobs:
           gh label create "to-main" --color "28a745" --description "PR targeting main environment" 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
       - name: Add label to original PR
         run: |
           gh pr edit ${{ steps.pr_info.outputs.pr_number }} --add-label "to-dev"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
       - name: Create PR feature to staging
         id: pr_staging
