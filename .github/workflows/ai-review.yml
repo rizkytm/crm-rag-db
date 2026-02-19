@@ -23,3 +23,5 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ZAI_API_KEY }}
           ANTHROPIC_BASE_URL: "https://api.z.ai/api/anthropic"
           MODEL: "claude-sonnet-4-20250514"
+          DISABLE_APPROVALS: "true"
+          EVENT_TYPE: "COMMENT_ONLY"

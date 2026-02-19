@@ -34,10 +34,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
-      - name: Create PR dev to staging
+      - name: Create PR feature to staging
         id: pr_staging
         run: |
-          SOURCE="dev"
+          SOURCE="${{ steps.pr_info.outputs.source_branch }}"
           TARGET="staging"
           ORIGINAL_PR="${{ steps.pr_info.outputs.pr_number }}"
           ORIGINAL_BRANCH="${{ steps.pr_info.outputs.source_branch }}"
@@ -46,7 +46,7 @@ jobs:
           # Check if staging branch exists, if not create it
           if ! git rev-parse --verify origin/$TARGET >/dev/null 2>&1; then
             echo "Creating $TARGET branch..."
-            git checkout -b $TARGET origin/$SOURCE
+            git checkout -b $TARGET origin/dev
             git push origin $TARGET
           fi
 
@@ -67,14 +67,14 @@ jobs:
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             # Create the PR
-            PR_TITLE="Merge $SOURCE into $TARGET (cascading from PR #$ORIGINAL_PR)"
+            PR_TITLE="Merge $ORIGINAL_BRANCH into $TARGET"
             PR_BODY="This is an automatically created cascading PR.
 
             - Original PR: #$ORIGINAL_PR
             - Original branch: $ORIGINAL_BRANCH
-            - Merging $SOURCE into $TARGET
+            - Merging $ORIGINAL_BRANCH into $TARGET
 
-            This PR will be updated automatically when changes are merged to $SOURCE."
+            This PR tracks the same changes as the original PR but targets the $TARGET environment."
 
             gh pr create \
               --base $TARGET \
@@ -97,10 +97,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create PR staging to main
+      - name: Create PR feature to main
         id: pr_main
         run: |
-          SOURCE="staging"
+          SOURCE="${{ steps.pr_info.outputs.source_branch }}"
           TARGET="main"
           ORIGINAL_PR="${{ steps.pr_info.outputs.pr_number }}"
           ORIGINAL_BRANCH="${{ steps.pr_info.outputs.source_branch }}"
@@ -109,7 +109,7 @@ jobs:
           # Check if main branch exists, if not create it
           if ! git rev-parse --verify origin/$TARGET >/dev/null 2>&1; then
             echo "Creating $TARGET branch..."
-            git checkout -b $TARGET origin/$SOURCE || git checkout -b $TARGET
+            git checkout -b $TARGET origin/dev
             git push origin $TARGET
           fi
 
@@ -130,14 +130,14 @@ jobs:
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             # Create the PR
-            PR_TITLE="Merge $SOURCE into $TARGET (cascading from PR #$ORIGINAL_PR)"
+            PR_TITLE="Merge $ORIGINAL_BRANCH into $TARGET"
             PR_BODY="This is an automatically created cascading PR.
 
             - Original PR: #$ORIGINAL_PR
             - Original branch: $ORIGINAL_BRANCH
-            - Merging $SOURCE into $TARGET
+            - Merging $ORIGINAL_BRANCH into $TARGET
 
-            This PR will be updated automatically when changes are merged to $SOURCE."
+            This PR tracks the same changes as the original PR but targets the $TARGET environment."
 
             gh pr create \
               --base $TARGET \
@@ -172,14 +172,14 @@ jobs:
 
           COMMENT_BODY="### Cascading PRs Created
 
-          This PR has automatically created cascading pull requests:
+          This PR has automatically created parallel pull requests to all environments:
 
           | PR | Assignee | Labels | Status |
           |---|---|---|---|
-          | dev to staging #$STAGING_PR | @$ASSIGNEE | to-staging | $STAGING_STATUS |
-          | staging to main #$MAIN_PR | @$ASSIGNEE | to-main | $MAIN_STATUS |
+          | feature to staging #$STAGING_PR | @$ASSIGNEE | to-staging | $STAGING_STATUS |
+          | feature to main #$MAIN_PR | @$ASSIGNEE | to-main | $MAIN_STATUS |
 
-          These PRs will be updated as changes flow through the pipeline."
+          These PRs track the same changes as the original PR but target different environments."
 
           gh pr comment $ORIGINAL_PR --body "$COMMENT_BODY"
         env:
@@ -195,11 +195,11 @@ jobs:
           echo "**Source Branch:** ${{ steps.pr_info.outputs.source_branch }}" >> $GITHUB_STEP_SUMMARY
           echo "**Author:** @$ASSIGNEE" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Created PRs:**" >> $GITHUB_STEP_SUMMARY
-          echo "- dev to staging: #${{ steps.pr_staging.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Created Parallel PRs:**" >> $GITHUB_STEP_SUMMARY
+          echo "- feature to staging: #${{ steps.pr_staging.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
           echo "  - Label: to-staging" >> $GITHUB_STEP_SUMMARY
           echo "  - Assignee: @$ASSIGNEE" >> $GITHUB_STEP_SUMMARY
-          echo "- staging to main: #${{ steps.pr_main.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- feature to main: #${{ steps.pr_main.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
           echo "  - Label: to-main" >> $GITHUB_STEP_SUMMARY
           echo "  - Assignee: @$ASSIGNEE" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
