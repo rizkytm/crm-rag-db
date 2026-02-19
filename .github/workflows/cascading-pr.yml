@@ -1,0 +1,193 @@
+name: Create Cascading PRs
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - dev
+
+jobs:
+  create-cascading-prs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR information
+        id: pr_info
+        run: |
+          echo "source_branch=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          echo "target_branch=${{ github.base_ref }}" >> $GITHUB_OUTPUT
+          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+
+      - name: Add label to original PR
+        run: |
+          gh pr edit ${{ steps.pr_info.outputs.pr_number }} --add-label "to-dev"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Create PR: dev → staging
+        id: pr_staging
+        run: |
+          SOURCE="dev"
+          TARGET="staging"
+          ORIGINAL_PR="${{ steps.pr_info.outputs.pr_number }}"
+          ORIGINAL_BRANCH="${{ steps.pr_info.outputs.source_branch }}"
+          ASSIGNEE="${{ steps.pr_info.outputs.pr_author }}"
+
+          # Check if staging branch exists, if not create it
+          if ! git rev-parse --verify origin/$TARGET >/dev/null 2>&1; then
+            echo "Creating $TARGET branch..."
+            git checkout -b $TARGET origin/$SOURCE
+            git push origin $TARGET
+          fi
+
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list \
+            --base $TARGET \
+            --head $SOURCE \
+            --json number,title \
+            --jq '.[0].number' // empty)
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR $SOURCE → $TARGET already exists (#$EXISTING_PR)"
+
+            # Update assignee and labels for existing PR
+            gh pr edit $EXISTING_PR --add-assignee "$ASSIGNEE" --add-label "to-staging"
+
+            echo "pr_number=$EXISTING_PR" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            # Create the PR
+            PR_TITLE="Merge $SOURCE into $TARGET (cascading from PR #$ORIGINAL_PR)"
+            PR_BODY="This is an automatically created cascading PR.
+
+            - Original PR: #$ORIGINAL_PR
+            - Original branch: \`$ORIGINAL_BRANCH\`
+            - Merging \`$SOURCE\` into \`$TARGET\`
+
+            This PR will be updated automatically when changes are merged to $SOURCE."
+
+            PR_NUMBER=$(gh pr create \
+              --base $TARGET \
+              --head $SOURCE \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" \
+              --assignee "$ASSIGNEE" \
+              --label "to-staging" \
+              --json number \
+              --jq '.number')
+
+            echo "✓ Created PR: $SOURCE → $TARGET (#$PR_NUMBER)"
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create PR: staging → main
+        id: pr_main
+        run: |
+          SOURCE="staging"
+          TARGET="main"
+          ORIGINAL_PR="${{ steps.pr_info.outputs.pr_number }}"
+          ORIGINAL_BRANCH="${{ steps.pr_info.outputs.source_branch }}"
+          ASSIGNEE="${{ steps.pr_info.outputs.pr_author }}"
+
+          # Check if main branch exists, if not create it
+          if ! git rev-parse --verify origin/$TARGET >/dev/null 2>&1; then
+            echo "Creating $TARGET branch..."
+            git checkout -b $TARGET origin/$SOURCE || git checkout -b $TARGET
+            git push origin $TARGET
+          fi
+
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list \
+            --base $TARGET \
+            --head $SOURCE \
+            --json number,title \
+            --jq '.[0].number' // empty)
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR $SOURCE → $TARGET already exists (#$EXISTING_PR)"
+
+            # Update assignee and labels for existing PR
+            gh pr edit $EXISTING_PR --add-assignee "$ASSIGNEE" --add-label "to-main"
+
+            echo "pr_number=$EXISTING_PR" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            # Create the PR
+            PR_TITLE="Merge $SOURCE into $TARGET (cascading from PR #$ORIGINAL_PR)"
+            PR_BODY="This is an automatically created cascading PR.
+
+            - Original PR: #$ORIGINAL_PR
+            - Original branch: \`$ORIGINAL_BRANCH\`
+            - Merging \`$SOURCE\` into \`$TARGET\`
+
+            This PR will be updated automatically when changes are merged to $SOURCE."
+
+            PR_NUMBER=$(gh pr create \
+              --base $TARGET \
+              --head $SOURCE \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" \
+              --assignee "$ASSIGNEE" \
+              --label "to-main" \
+              --json number \
+              --jq '.number')
+
+            echo "✓ Created PR: $SOURCE → $TARGET (#$PR_NUMBER)"
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on original PR
+        run: |
+          ORIGINAL_PR="${{ steps.pr_info.outputs.pr_number }}"
+          ASSIGNEE="${{ steps.pr_info.outputs.pr_author }}"
+
+          COMMENT_BODY="### 🔄 Cascading PRs Created
+
+          This PR has automatically created cascading pull requests:
+
+          | PR | Assignee | Labels | Status |
+          |---|---|---|---|
+          | [dev → staging](#${{ steps.pr_staging.outputs.pr_number }}) | @$ASSIGNEE | \`to-staging\` | ${{ steps.pr_staging.outputs.exists == 'true' && 'Already existed' || '✓ Created' }} |
+          | [staging → main](#${{ steps.pr_main.outputs.pr_number }}) | @$ASSIGNEE | \`to-main\` | ${{ steps.pr_main.outputs.exists == 'true' && 'Already existed' || '✓ Created' }} |
+
+          These PRs will be updated as changes flow through the pipeline."
+
+          gh pr comment $ORIGINAL_PR --body "$COMMENT_BODY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          ASSIGNEE="${{ steps.pr_info.outputs.pr_author }}"
+
+          echo "### Cascading PRs Summary :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Original PR:** #${{ steps.pr_info.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Source Branch:** ${{ steps.pr_info.outputs.source_branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** @$ASSIGNEE" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Created PRs:**" >> $GITHUB_STEP_SUMMARY
+          echo "- dev → staging: #${{ steps.pr_staging.outputs.pr_number }} ${{ steps.pr_staging.outputs.exists == 'true' && '(already existed)' || '(newly created)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "  - Label: \`to-staging\`" >> $GITHUB_STEP_SUMMARY
+          echo "  - Assignee: @$ASSIGNEE" >> $GITHUB_STEP_SUMMARY
+          echo "- staging → main: #${{ steps.pr_main.outputs.pr_number }} ${{ steps.pr_main.outputs.exists == 'true' && '(already existed)' || '(newly created)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "  - Label: \`to-main\`" >> $GITHUB_STEP_SUMMARY
+          echo "  - Assignee: @$ASSIGNEE" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Original PR Label:** \`to-dev\`" >> $GITHUB_STEP_SUMMARY
