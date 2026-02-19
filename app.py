@@ -40,6 +40,8 @@ st.markdown("""
 st.markdown('<div class="main-header">👥 CRM Leads Assistant</div>', unsafe_allow_html=True)
 st.markdown("---")
 
+# Initialize session state
+
 # Sidebar for configuration
 with st.sidebar:
     st.header("⚙️ Configuration")
