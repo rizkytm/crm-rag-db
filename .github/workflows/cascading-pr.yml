@@ -55,7 +55,7 @@ jobs:
             --base $TARGET \
             --head $SOURCE \
             --json number,title \
-            --jq '.[0].number' // empty)
+            --jq '.[0].number // empty')
 
           if [ -n "$EXISTING_PR" ]; then
             echo "PR $SOURCE to $TARGET already exists (#$EXISTING_PR)"
@@ -114,7 +114,7 @@ jobs:
             --base $TARGET \
             --head $SOURCE \
             --json number,title \
-            --jq '.[0].number' // empty)
+            --jq '.[0].number // empty')
 
           if [ -n "$EXISTING_PR" ]; then
             echo "PR $SOURCE to $TARGET already exists (#$EXISTING_PR)"
