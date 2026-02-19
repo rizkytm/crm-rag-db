@@ -205,6 +205,7 @@ def main():
     st.markdown("### ⚡ Quick Actions")
 
     col1, col2, col3, col4 = st.columns(4)
+    # Example quick action buttons for common queries
 
     with col1:
         if st.button("📊 Latest 10 Leads", use_container_width=True):
