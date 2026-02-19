@@ -157,6 +157,11 @@ jobs:
           ORIGINAL_PR="${{ steps.pr_info.outputs.pr_number }}"
           ASSIGNEE="${{ steps.pr_info.outputs.pr_author }}"
 
+          STAGING_PR="${{ steps.pr_staging.outputs.pr_number }}"
+          MAIN_PR="${{ steps.pr_main.outputs.pr_number }}"
+          STAGING_STATUS="${{ steps.pr_staging.outputs.exists == 'true' && 'Already existed' || 'Created' }}"
+          MAIN_STATUS="${{ steps.pr_main.outputs.exists == 'true' && 'Already existed' || 'Created' }}"
+
           COMMENT_BODY="### Cascading PRs Created
 
           This PR has automatically created cascading pull requests:
@@ -167,11 +172,6 @@ jobs:
           | staging to main #$MAIN_PR | @$ASSIGNEE | to-main | $MAIN_STATUS |
 
           These PRs will be updated as changes flow through the pipeline."
-
-          STAGING_PR="${{ steps.pr_staging.outputs.pr_number }}"
-          MAIN_PR="${{ steps.pr_main.outputs.pr_number }}"
-          STAGING_STATUS="${{ steps.pr_staging.outputs.exists == 'true' && 'Already existed' || 'Created' }}"
-          MAIN_STATUS="${{ steps.pr_main.outputs.exists == 'true' && 'Already existed' || 'Created' }}"
 
           gh pr comment $ORIGINAL_PR --body "$COMMENT_BODY"
         env:
