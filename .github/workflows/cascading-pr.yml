@@ -27,12 +27,20 @@ jobs:
           echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
 
+      - name: Create labels if they don't exist
+        run: |
+          # Create labels if they don't exist
+          gh label create "to-dev" --color "0075ca" --description "PR targeting dev environment" 2>/dev/null || true
+          gh label create "to-staging" --color "fbca04" --description "PR targeting staging environment" 2>/dev/null || true
+          gh label create "to-main" --color "28a745" --description "PR targeting main environment" 2>/dev/null || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Add label to original PR
         run: |
           gh pr edit ${{ steps.pr_info.outputs.pr_number }} --add-label "to-dev"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
 
       - name: Create PR feature to staging
         id: pr_staging
