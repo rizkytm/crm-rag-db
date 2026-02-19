@@ -11,8 +11,8 @@ on:
         description: 'Release description'
         required: true
         type: string
-      environment:
-        description: 'Deployment environment'
+      branch:
+        description: 'Source branch (determines deployment environment)'
         required: true
         type: choice
         options:
@@ -86,13 +86,13 @@ jobs:
       - name: Trigger Deployment
         id: trigger_deployment
         run: |
-          ENVIRONMENT="${{ inputs.environment }}"
+          BRANCH="${{ inputs.branch }}"
 
-          echo "Triggering deployment to $ENVIRONMENT environment..."
+          echo "Triggering deployment to $BRANCH environment..."
 
           # Trigger the deployment workflow
           gh workflow run deployment.yml \
-            -f environment="$ENVIRONMENT"
+            -f environment="$BRANCH"
 
           echo "✓ Deployment workflow triggered successfully"
 
@@ -110,7 +110,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **URL:** ${{ steps.create_release.outputs.release_url }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ inputs.branch }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Created by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Deployment:** [View Deployment Workflow](${{ steps.trigger_deployment.outputs.deployment_workflow_url }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
