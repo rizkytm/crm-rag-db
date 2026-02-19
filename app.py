@@ -18,6 +18,7 @@ st.set_page_config(
 
 # add comment
 
+# CRM Leads Assistant - Streamlit app for querying CRM leads data using an LLM agent with PostgreSQL database tools
 
 # Custom CSS
 st.markdown("""
