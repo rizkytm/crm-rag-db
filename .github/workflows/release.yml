@@ -18,7 +18,7 @@ on:
         options:
           - dev
           - staging
-          - production
+          - main
         default: 'dev'
 
 jobs:
@@ -91,14 +91,14 @@ jobs:
           echo "Triggering deployment to $ENVIRONMENT environment..."
 
           # Trigger the deployment workflow
-          gh workflow run deploy.yml \
+          gh workflow run deployment.yml \
             -f environment="$ENVIRONMENT"
 
           echo "✓ Deployment workflow triggered successfully"
 
           # Get the workflow run URL
           sleep 5
-          WORKFLOW_RUN_URL=$(gh run list --workflow=deploy.yml --limit 1 --json url --jq '.[0].url')
+          WORKFLOW_RUN_URL=$(gh run list --workflow=deployment.yml --limit 1 --json url --jq '.[0].url')
 
           echo "deployment_workflow_url=$WORKFLOW_RUN_URL" >> $GITHUB_OUTPUT
         env:
