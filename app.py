@@ -37,8 +37,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# this is a comment
+
 st.markdown('<div class="main-header">👥 CRM Leads Assistant</div>', unsafe_allow_html=True)
 st.markdown("---")
+
+# this is additional comment
 
 # Sidebar for configuration
 with st.sidebar:
@@ -74,6 +78,7 @@ with st.sidebar:
     """)
 
 # Initialize database connection
+#this is another comment
 @st.cache_resource
 def init_database():
     """Initialize database connection"""
@@ -180,7 +185,7 @@ def main():
         submit_button = st.button("🔍 Search", use_container_width=True, type="primary")
 
     if submit_button:
-        if not user_query.strip():
+        if user_query = None:
             st.warning("⚠️ Please enter a query.")
         else:
             try:
