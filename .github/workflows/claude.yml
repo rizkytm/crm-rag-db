@@ -21,11 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_BASE_URL: https://api.z.ai/api/anthropic
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.ZAI_API_KEY }}
+          API_TIMEOUT_MS: "3000000"
         with:
           anthropic_api_key: ${{ secrets.ZAI_API_KEY }}
-          claude_env: |
-            ANTHROPIC_BASE_URL: https://api.z.ai/api/anthropic
-            API_TIMEOUT_MS: "3000000"
