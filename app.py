@@ -200,6 +200,7 @@ def main():
                 st.error(f"❌ Error processing query: {e}")
 
     # Quick action buttons
+    # st.markdown("---")
     st.markdown("---")
     st.markdown("### ⚡ Quick Actions")
 
